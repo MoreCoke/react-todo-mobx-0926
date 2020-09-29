@@ -2,7 +2,7 @@ import React from "react";
 import "./App.css";
 import TodoItem from "./components/TodoItem";
 import { observer } from "mobx-react";
-import { action, computed, observable, reaction } from "mobx";
+import { action, computed, observable, reaction, runInAction } from "mobx";
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -47,6 +47,7 @@ class App extends React.Component {
 
   @action.bound deleteTodo(id) {
     this.todos = this.todos.filter((element) => element["id"] !== id);
+    this.showTodos = this.showTodos.filter((element) => element["id"] !== id);
     this.pages = Math.ceil(this.todos.length / todosPerPage);
   }
 
@@ -71,6 +72,18 @@ class App extends React.Component {
     this.allCompleted = true;
   }
 
+  @action.bound async query(page = 1) {
+    const pageTodoStart = (page - 1) * todosPerPage;
+    const pageTodoEnd = pageTodoStart + todosPerPage;
+    const currentPageTodos = this.todos.slice(pageTodoStart, pageTodoEnd);
+    this.loading = true;
+    await delay(500);
+    runInAction(() => {
+      this.loading = false;
+      this.showTodos = currentPageTodos;
+    });
+  }
+
   @computed get todoItems() {
     return this.showTodos.filter((element) =>
       this.allCompleted ? element["isCompleted"] : true
@@ -91,16 +104,6 @@ class App extends React.Component {
       );
     });
   }
-
-  query = async (page = 1) => {
-    const pageTodoStart = (page - 1) * todosPerPage;
-    const pageTodoEnd = pageTodoStart + todosPerPage;
-    const currentPageTodos = this.todos.slice(pageTodoStart, pageTodoEnd);
-    this.loading = true;
-    await delay(500);
-    this.loading = false;
-    this.showTodos = currentPageTodos;
-  };
 
   pagination = () => {
     const pageArr = [];
