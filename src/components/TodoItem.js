@@ -8,7 +8,7 @@ const TodoItem = observer((props) => {
       <input
         type="checkbox"
         value={task.isCompleted}
-        checked={task.isCompleted}
+        defaultChecked={task.isCompleted}
         onClick={() => toggleBoolean(task.id)}
       />
       <span className={task.isCompleted ? "completed" : ""}>{task.text}</span>
