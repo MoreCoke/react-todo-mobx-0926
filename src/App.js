@@ -23,7 +23,6 @@ class App extends React.Component {
   @observable editText = "";
   @observable allCompleted = false;
   @observable loading = false;
-  @observable pages = Math.ceil(this.todos.length / todosPerPage);
 
   @action.bound updateAddInputValue(evt) {
     this.text = evt.target.value;
@@ -42,13 +41,11 @@ class App extends React.Component {
     };
     this.todos.push(todo);
     this.text = "";
-    this.pages = Math.ceil(this.todos.length / todosPerPage);
   }
 
   @action.bound deleteTodo(id) {
     this.todos = this.todos.filter((element) => element["id"] !== id);
     this.showTodos = this.showTodos.filter((element) => element["id"] !== id);
-    this.pages = Math.ceil(this.todos.length / todosPerPage);
   }
 
   @action.bound editTodo(id) {
@@ -90,6 +87,10 @@ class App extends React.Component {
     );
   }
 
+  @computed get pages() {
+    return Math.ceil(this.todos.length / todosPerPage);
+  }
+
   renderTodoItems() {
     return this.todoItems.map((element) => {
       return (
@@ -119,7 +120,6 @@ class App extends React.Component {
 
   componentDidMount() {
     this.todos = [...fakeData];
-    this.pages = Math.ceil(this.todos.length / todosPerPage);
     this.query();
     reaction(
       () => this.todos.map((element) => element.text),
