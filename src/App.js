@@ -14,13 +14,35 @@ const fakeData = Array.from({ length: 15 }, (_, idx) => ({
 
 const todosPerPage = 5;
 
+// showtodo 用 computed 做
+// marktodo 放進 todoItem
+// fakeData 把 isComplete 移出來 別改ＡＰＩ資料
+// pagination 改成載入更多
+
 @observer
 class App extends React.Component {
   @observable todos = [];
-  @observable showTodos = [];
   @observable text = "";
   @observable allCompleted = false;
   @observable loading = false;
+  @observable page = 1;
+
+  @computed get todoItems() {
+    return this.showTodos.filter((element) =>
+      this.allCompleted ? element["isCompleted"] : true
+    );
+  }
+
+  @computed get pages() {
+    return Math.ceil(this.todos.length / todosPerPage);
+  }
+
+  @computed get showTodos() {
+    const pageTodoStart = (this.page - 1) * todosPerPage;
+    const pageTodoEnd = pageTodoStart + todosPerPage;
+    const currentPageTodos = this.todos.slice(pageTodoStart, pageTodoEnd);
+    return currentPageTodos;
+  }
 
   @action.bound updateAddInputValue(evt) {
     this.text = evt.target.value;
@@ -38,7 +60,6 @@ class App extends React.Component {
 
   @action.bound deleteTodo(id) {
     this.todos = this.todos.filter((element) => element["id"] !== id);
-    this.showTodos = this.showTodos.filter((element) => element["id"] !== id);
   }
 
   @action.bound editTodo(id, text) {
@@ -59,25 +80,13 @@ class App extends React.Component {
   }
 
   @action.bound async query(page = 1) {
-    const pageTodoStart = (page - 1) * todosPerPage;
-    const pageTodoEnd = pageTodoStart + todosPerPage;
-    const currentPageTodos = this.todos.slice(pageTodoStart, pageTodoEnd);
     this.loading = true;
-    await delay(500);
-    runInAction(() => {
-      this.loading = false;
-      this.showTodos = currentPageTodos;
+    await delay(500).then(() => {
+      runInAction(() => {
+        this.page = page;
+        this.loading = false;
+      });
     });
-  }
-
-  @computed get todoItems() {
-    return this.showTodos.filter((element) =>
-      this.allCompleted ? element["isCompleted"] : true
-    );
-  }
-
-  @computed get pages() {
-    return Math.ceil(this.todos.length / todosPerPage);
   }
 
   renderTodoItems() {
