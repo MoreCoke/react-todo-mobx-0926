@@ -2,17 +2,30 @@ import React from "react";
 import "./App.css";
 import TodoItem from "./components/TodoItem";
 import { observer } from "mobx-react";
-import { action, computed, observable } from "mobx";
+import { action, computed, observable, reaction } from "mobx";
+
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const fakeData = Array.from({ length: 15 }, (_, idx) => ({
+  id: idx,
+  text: Math.random().toString(36).substring(7),
+  isCompleted: false,
+  isEdited: false,
+}));
+
+const todosPerPage = 5;
 
 @observer
 class App extends React.Component {
   @observable todos = [];
+  @observable showTodos = [];
   @observable text = "";
   @observable editText = "";
   @observable allCompleted = false;
+  @observable loading = false;
+  @observable pages = Math.ceil(this.todos.length / todosPerPage);
 
-  @action.bound
-  updateAddInputValue(evt) {
+  @action.bound updateAddInputValue(evt) {
     this.text = evt.target.value;
   }
 
@@ -29,10 +42,12 @@ class App extends React.Component {
     };
     this.todos.push(todo);
     this.text = "";
+    this.pages = Math.ceil(this.todos.length / todosPerPage);
   }
 
   @action.bound deleteTodo(id) {
     this.todos = this.todos.filter((element) => element["id"] !== id);
+    this.pages = Math.ceil(this.todos.length / todosPerPage);
   }
 
   @action.bound editTodo(id) {
@@ -57,7 +72,7 @@ class App extends React.Component {
   }
 
   @computed get todoItems() {
-    return this.todos.filter((element) =>
+    return this.showTodos.filter((element) =>
       this.allCompleted ? element["isCompleted"] : true
     );
   }
@@ -77,6 +92,38 @@ class App extends React.Component {
     });
   }
 
+  query = async (page = 1) => {
+    const pageTodoStart = (page - 1) * todosPerPage;
+    const pageTodoEnd = pageTodoStart + todosPerPage;
+    const currentPageTodos = this.todos.slice(pageTodoStart, pageTodoEnd);
+    this.loading = true;
+    await delay(500);
+    this.loading = false;
+    this.showTodos = currentPageTodos;
+  };
+
+  pagination = () => {
+    const pageArr = [];
+    for (let i = 1; i <= this.pages; i++) {
+      pageArr.push(
+        <button key={i} onClick={() => this.query(i)}>
+          {i}
+        </button>
+      );
+    }
+    return pageArr;
+  };
+
+  componentDidMount() {
+    this.todos = [...fakeData];
+    this.pages = Math.ceil(this.todos.length / todosPerPage);
+    this.query();
+    reaction(
+      () => this.todos.map((element) => element.text),
+      (text) => console.log(text)
+    );
+  }
+
   render() {
     return (
       <div>
@@ -86,7 +133,12 @@ class App extends React.Component {
           onChange={(evt) => this.updateAddInputValue(evt)}
         />
         <button onClick={this.addTodo}>新增</button>
-        <ul className="list">{this.renderTodoItems()}</ul>
+        {this.loading ? (
+          <div className="loading" />
+        ) : (
+          <ul className="list">{this.renderTodoItems()}</ul>
+        )}
+        <div>{this.pagination()}</div>
         <button onClick={this.allTodo}>全部</button>
         <button onClick={this.allDoneTodo}>已完成</button>
       </div>
