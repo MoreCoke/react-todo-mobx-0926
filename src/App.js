@@ -10,7 +10,6 @@ const fakeData = Array.from({ length: 15 }, (_, idx) => ({
   id: idx,
   text: Math.random().toString(36).substring(7),
   isCompleted: false,
-  isEdited: false,
 }));
 
 const todosPerPage = 5;
@@ -20,7 +19,6 @@ class App extends React.Component {
   @observable todos = [];
   @observable showTodos = [];
   @observable text = "";
-  @observable editText = "";
   @observable allCompleted = false;
   @observable loading = false;
 
@@ -28,15 +26,10 @@ class App extends React.Component {
     this.text = evt.target.value;
   }
 
-  @action.bound updateEditInputValue(evt) {
-    this.editText = evt.target.value;
-  }
-
   @action.bound addTodo() {
     const todo = {
       text: this.text,
       isCompleted: false,
-      isEdited: false,
       id: new Date().getTime(),
     };
     this.todos.push(todo);
@@ -48,13 +41,9 @@ class App extends React.Component {
     this.showTodos = this.showTodos.filter((element) => element["id"] !== id);
   }
 
-  @action.bound editTodo(id) {
+  @action.bound editTodo(id, text) {
     const index = this.todos.map((element) => element["id"]).indexOf(id);
-    if (this.editText) {
-      this.todos[index].text = this.editText;
-      this.editText = "";
-    }
-    this.todos[index].isEdited = !this.todos[index].isEdited;
+    this.todos[index].text = text;
   }
   @action.bound markTodo(id) {
     const index = this.todos.map((element) => element["id"]).indexOf(id);
@@ -98,8 +87,7 @@ class App extends React.Component {
           task={element}
           del={() => this.deleteTodo(element["id"])}
           toggleBoolean={() => this.markTodo(element["id"])}
-          update={(evt) => this.updateEditInputValue(evt)}
-          edit={() => this.editTodo(element["id"])}
+          editTodo={this.editTodo}
           key={element["id"]}
         />
       );
