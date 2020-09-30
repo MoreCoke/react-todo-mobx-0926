@@ -22,19 +22,9 @@ class App extends React.Component {
   @observable page = 1;
 
   @computed get todoItems() {
-    return this.showTodos.filter((element) =>
+    return this.todos.filter((element) =>
       this.allCompleted ? element["isCompleted"] : true
     );
-  }
-
-  @computed get totoalPage() {
-    return Math.ceil(this.todos.length / todosPerPage);
-  }
-
-  @computed get showTodos() {
-    const pageTodoEnd = this.page * todosPerPage;
-    const currentPageTodos = this.todos.slice(0, pageTodoEnd);
-    return currentPageTodos;
   }
 
   @action.bound updateAddInputValue(evt) {
@@ -72,18 +62,20 @@ class App extends React.Component {
     this.allCompleted = true;
   }
 
-  @action.bound async query(init = false) {
+  @action.bound async query() {
     this.loading = true;
     await delay(500).then(() => {
       runInAction(() => {
-        if (init) {
-          const data = fakeData.map((elemnt) => {
+        const pageTodoStart = (this.page - 1) * 5;
+        const pageTodoEnd = this.page * todosPerPage;
+        const data = fakeData
+          .map((elemnt) => {
             elemnt.isCompleted = false;
             return elemnt;
-          });
-          this.todos = [...data];
-        }
-        if (!init && this.page <= this.totoalPage) {
+          })
+          .slice(pageTodoStart, pageTodoEnd);
+        this.todos.push(...data);
+        if (data.length > 0) {
           this.page += 1;
         }
         this.loading = false;
@@ -106,7 +98,7 @@ class App extends React.Component {
   }
 
   componentDidMount() {
-    this.query(true);
+    this.query();
     reaction(
       () => this.todos.map((element) => element.text),
       (text) => console.log(text)
@@ -129,7 +121,7 @@ class App extends React.Component {
         )}
         <button onClick={this.allTodo}>全部</button>
         <button onClick={this.allDoneTodo}>已完成</button>
-        <button onClick={() => this.query()}>載入更多</button>
+        <button onClick={this.query}>載入更多</button>
       </div>
     );
   }
