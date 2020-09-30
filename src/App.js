@@ -9,12 +9,9 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 const fakeData = Array.from({ length: 15 }, (_, idx) => ({
   id: idx,
   text: Math.random().toString(36).substring(7),
-  isCompleted: false,
 }));
 
 const todosPerPage = 5;
-
-// fakeData 把 isComplete 移出來 別改ＡＰＩ資料
 
 @observer
 class App extends React.Component {
@@ -50,7 +47,7 @@ class App extends React.Component {
       isCompleted: false,
       id: new Date().getTime(),
     };
-    this.todos.push(todo);
+    this.todos.unshift(todo);
     this.text = "";
   }
 
@@ -80,7 +77,11 @@ class App extends React.Component {
     await delay(500).then(() => {
       runInAction(() => {
         if (init) {
-          this.todos = [...fakeData];
+          const data = fakeData.map((elemnt) => {
+            elemnt.isCompleted = false;
+            return elemnt;
+          });
+          this.todos = [...data];
         }
         if (!init && this.page <= this.totoalPage) {
           this.page += 1;

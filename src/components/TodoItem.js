@@ -4,9 +4,6 @@ import { observable, action } from "mobx";
 
 @observer
 class TodoItem extends React.Component {
-  constructor(props) {
-    super(props);
-  }
   @observable editText = this.props.task.text;
   @observable isEdited = false;
 
