@@ -14,10 +14,7 @@ const fakeData = Array.from({ length: 15 }, (_, idx) => ({
 
 const todosPerPage = 5;
 
-// showtodo 用 computed 做
-// marktodo 放進 todoItem
 // fakeData 把 isComplete 移出來 別改ＡＰＩ資料
-// pagination 改成載入更多
 
 @observer
 class App extends React.Component {
@@ -33,14 +30,13 @@ class App extends React.Component {
     );
   }
 
-  @computed get pages() {
+  @computed get totoalPage() {
     return Math.ceil(this.todos.length / todosPerPage);
   }
 
   @computed get showTodos() {
-    const pageTodoStart = (this.page - 1) * todosPerPage;
-    const pageTodoEnd = pageTodoStart + todosPerPage;
-    const currentPageTodos = this.todos.slice(pageTodoStart, pageTodoEnd);
+    const pageTodoEnd = this.page * todosPerPage;
+    const currentPageTodos = this.todos.slice(0, pageTodoEnd);
     return currentPageTodos;
   }
 
@@ -79,11 +75,16 @@ class App extends React.Component {
     this.allCompleted = true;
   }
 
-  @action.bound async query(page = 1) {
+  @action.bound async query(init = false) {
     this.loading = true;
     await delay(500).then(() => {
       runInAction(() => {
-        this.page = page;
+        if (init) {
+          this.todos = [...fakeData];
+        }
+        if (!init && this.page <= this.totoalPage) {
+          this.page += 1;
+        }
         this.loading = false;
       });
     });
@@ -103,21 +104,8 @@ class App extends React.Component {
     });
   }
 
-  pagination = () => {
-    const pageArr = [];
-    for (let i = 1; i <= this.pages; i++) {
-      pageArr.push(
-        <button key={i} onClick={() => this.query(i)}>
-          {i}
-        </button>
-      );
-    }
-    return pageArr;
-  };
-
   componentDidMount() {
-    this.todos = [...fakeData];
-    this.query();
+    this.query(true);
     reaction(
       () => this.todos.map((element) => element.text),
       (text) => console.log(text)
@@ -138,9 +126,9 @@ class App extends React.Component {
         ) : (
           <ul className="list">{this.renderTodoItems()}</ul>
         )}
-        <div>{this.pagination()}</div>
         <button onClick={this.allTodo}>全部</button>
         <button onClick={this.allDoneTodo}>已完成</button>
+        <button onClick={() => this.query()}>載入更多</button>
       </div>
     );
   }
