@@ -1,8 +1,10 @@
 import React from "react";
-import "./App.css";
-import TodoItem from "./components/TodoItem";
 import { observer } from "mobx-react";
 import { action, computed, observable, reaction, runInAction } from "mobx";
+
+import TodoItem from "./components/TodoItem";
+
+import "./App.css";
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -19,7 +21,9 @@ class App extends React.Component {
   @observable text = "";
   @observable allCompleted = false;
   @observable loading = false;
-  @observable page = 1;
+
+  page = 1;
+  logReaction = null;
 
   @computed get todoItems() {
     return this.todos.filter((element) =>
@@ -64,45 +68,50 @@ class App extends React.Component {
 
   @action.bound async query() {
     this.loading = true;
-    await delay(500).then(() => {
-      runInAction(() => {
-        const pageTodoStart = (this.page - 1) * 5;
-        const pageTodoEnd = this.page * todosPerPage;
-        const data = fakeData
-          .map((elemnt) => {
-            elemnt.isCompleted = false;
-            return elemnt;
-          })
-          .slice(pageTodoStart, pageTodoEnd);
-        this.todos.push(...data);
-        if (data.length > 0) {
-          this.page += 1;
-        }
-        this.loading = false;
-      });
+
+    const list = await delay(500).then(() => {
+      const pageTodoStart = (this.page - 1) * 5;
+      const pageTodoEnd = this.page * todosPerPage;
+      return fakeData
+        .slice(pageTodoStart, pageTodoEnd)
+        .map((elemnt) => ({
+          ...elemnt,
+          isCompleted: false
+        }));
+    });
+
+    if (list.length > 0) {
+      this.page += 1;
+    }
+
+    runInAction(() => {
+      this.todos.concat(list);
+      this.loading = false;
     });
   }
 
   renderTodoItems() {
-    return this.todoItems.map((element) => {
-      return (
-        <TodoItem
-          task={element}
-          del={() => this.deleteTodo(element["id"])}
-          toggleBoolean={() => this.markTodo(element["id"])}
-          editTodo={this.editTodo}
-          key={element["id"]}
-        />
-      );
-    });
+    return this.todoItems.map((element) => (
+      <TodoItem
+        task={element}
+        del={() => this.deleteTodo(element["id"])}
+        toggleBoolean={() => this.markTodo(element["id"])}
+        editTodo={this.editTodo}
+        key={element["id"]}
+      />
+    ));
   }
 
   componentDidMount() {
     this.query();
-    reaction(
+    this.logReaction = reaction(
       () => this.todos.map((element) => element.text),
       (text) => console.log(text)
     );
+  }
+
+  componentWillUnmount() {
+    this.logReaction();
   }
 
   render() {
@@ -114,11 +123,10 @@ class App extends React.Component {
           onChange={(evt) => this.updateAddInputValue(evt)}
         />
         <button onClick={this.addTodo}>新增</button>
-        {this.loading ? (
-          <div className="loading" />
-        ) : (
-          <ul className="list">{this.renderTodoItems()}</ul>
-        )}
+
+        <ul className="list">{this.renderTodoItems()}</ul>
+
+        {this.loading ? (<div className="loading" />) : null}
         <button onClick={this.allTodo}>全部</button>
         <button onClick={this.allDoneTodo}>已完成</button>
         <button onClick={this.query}>載入更多</button>
