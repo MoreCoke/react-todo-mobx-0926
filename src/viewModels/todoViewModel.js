@@ -1,11 +1,12 @@
 import { action, computed, observable, reaction, runInAction } from "mobx";
-import { delay, fakeData } from "./utils";
+import { delay, fakeData } from "../utils";
+import TodoItemViewModel from "./todoItemViewModel";
 
 export const todosPerPage = 5;
 
 export default class todoViewModel {
   @observable todos = [];
-  @observable text = "";
+  @observable addText = "";
   @observable allCompleted = false;
   @observable loading = false;
 
@@ -19,30 +20,17 @@ export default class todoViewModel {
   }
 
   @action.bound updateAddInputValue(evt) {
-    this.text = evt.target.value;
+    this.addText = evt.target.value;
   }
 
   @action.bound addTodo() {
-    const todo = {
-      text: this.text,
-      isCompleted: false,
-      id: new Date().getTime(),
-    };
+    const todo = new TodoItemViewModel(this.addText);
     this.todos.unshift(todo);
-    this.text = "";
+    this.addText = "";
   }
 
   @action.bound deleteTodo(id) {
     this.todos = this.todos.filter((element) => element["id"] !== id);
-  }
-
-  @action.bound editTodo(id, text) {
-    const index = this.todos.map((element) => element["id"]).indexOf(id);
-    this.todos[index].text = text;
-  }
-  @action.bound markTodo(id) {
-    const index = this.todos.map((element) => element["id"]).indexOf(id);
-    this.todos[index].isCompleted = !this.todos[index].isCompleted;
   }
 
   @action.bound allTodo() {
@@ -59,10 +47,9 @@ export default class todoViewModel {
     const list = await delay(500).then(() => {
       const pageTodoStart = (this.page - 1) * 5;
       const pageTodoEnd = this.page * todosPerPage;
-      return fakeData.slice(pageTodoStart, pageTodoEnd).map((elemnt) => ({
-        ...elemnt,
-        isCompleted: false,
-      }));
+      return fakeData
+        .slice(pageTodoStart, pageTodoEnd)
+        .map((elemnt) => new TodoItemViewModel(elemnt.text));
     });
 
     if (list.length > 0) {

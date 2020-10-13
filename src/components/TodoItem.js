@@ -18,30 +18,35 @@ class TodoItem extends React.Component {
   }
 
   render() {
-    const { task, toggleBoolean, del } = this.props;
+    const {
+      task: {
+        isCompleted,
+        isEdited,
+        id,
+        text,
+        updateEditInputValue,
+        editTodo,
+        markTodo,
+      },
+      del,
+    } = this.props;
     return (
       <li className="list-item">
         <input
           type="checkbox"
-          value={task.isCompleted}
-          defaultChecked={task.isCompleted}
-          onClick={() => toggleBoolean(task.id)}
+          value={isCompleted}
+          defaultChecked={isCompleted}
+          onClick={markTodo}
         />
-        <span className={task.isCompleted ? "completed" : ""}>{task.text}</span>
+        <span className={isCompleted ? "completed" : ""}>{text}</span>
         <input
           type="text"
-          defaultValue={task.text}
-          onChange={(evt) => this.updateEditInputValue(evt)}
-          className={this.isEdited ? "" : "none"}
+          defaultValue={text}
+          onChange={(evt) => updateEditInputValue(evt)}
+          className={isEdited ? "" : "none"}
         />
-        <button
-          onClick={() => {
-            this.editTodo(task.id);
-          }}
-        >
-          {this.isEdited ? "完成編輯" : "編輯"}
-        </button>
-        <button onClick={() => del(task.id)}>刪除</button>
+        <button onClick={editTodo}>{isEdited ? "完成編輯" : "編輯"}</button>
+        <button onClick={() => del(id)}>刪除</button>
       </li>
     );
   }

@@ -2,7 +2,7 @@ import React from "react";
 import { observer } from "mobx-react";
 
 import TodoItem from "./components/TodoItem";
-import TodoViewModel from "./todoViewModel";
+import TodoViewModel from "./viewModels/todoViewModel";
 
 import "./App.css";
 
@@ -15,8 +15,6 @@ class App extends React.Component {
       <TodoItem
         task={element}
         del={() => todoViewModel.deleteTodo(element["id"])}
-        toggleBoolean={() => todoViewModel.markTodo(element["id"])}
-        editTodo={todoViewModel.editTodo}
         key={element["id"]}
       />
     ));
@@ -42,7 +40,7 @@ class App extends React.Component {
 
         <ul className="list">{this.renderTodoItems()}</ul>
 
-        {todoViewModel.loading ? <div className="loading" /> : null}
+        {todoViewModel.loading && <div className="loading" />}
         <button onClick={todoViewModel.allTodo}>全部</button>
         <button onClick={todoViewModel.allDoneTodo}>已完成</button>
         <button onClick={todoViewModel.query}>載入更多</button>
